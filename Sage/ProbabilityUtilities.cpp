@@ -33,7 +33,7 @@ float entropy(std::vector<float>& probabilities) {
 	float total_entropy = 0.0f;
 	for (float probability : probabilities) {
 		if (probability > 0) { // Avoid log(0) which is undefined
-			total_entropy -= probability * std::log(probability);
+			total_entropy -= probability * std::log2(probability);
 		}
 	}
 
