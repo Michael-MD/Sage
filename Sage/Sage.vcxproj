@@ -130,12 +130,10 @@
     <ClCompile Include="Sage.cpp" />
     <ClCompile Include="ProbabilityUtilities.cpp" />
     <ClCompile Include="SageCore.cpp" />
-    <ClCompile Include="UserInputUtilities.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ProbabilityUtilities.h" />
     <ClInclude Include="SageCore.h" />
-    <ClInclude Include="UserInputUtilities.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

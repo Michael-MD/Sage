@@ -24,18 +24,12 @@
     <ClCompile Include="SageCore.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="UserInputUtilities.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ProbabilityUtilities.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="SageCore.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="UserInputUtilities.h">
+    <ClInclude Include="ProbabilityUtilities.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
