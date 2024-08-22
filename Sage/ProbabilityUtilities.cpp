@@ -3,6 +3,7 @@
 
 #include <stdexcept>
 #include <cmath>
+#include <numeric> // For std::inner_product
 
 float evidence(std::vector<float>& conditional_probabilities, std::vector<float>& probabilities) {
 	// Calcuates a probability through paritioning of sample space
@@ -13,11 +14,7 @@ float evidence(std::vector<float>& conditional_probabilities, std::vector<float>
 	}
 #endif
 
-	float total_probability = 0.0f;
-	for (size_t i = 0; i < probabilities.size(); i++) {
-		total_probability += conditional_probabilities[i] * probabilities[i];
-	}
-
+	float total_probability = std::inner_product(probabilities.begin(), probabilities.end(), conditional_probabilities.begin(), 0.0f);
 	return total_probability;
 }
 

@@ -10,7 +10,7 @@
 
 #include "SageCore.h"
 
-std::vector<std::array<float, 11>> true_answers;
+std::vector<std::array<float, 20>> true_answers;
 std::vector<std::string> questions;
 
 class Sage : public SageCore {
@@ -31,54 +31,68 @@ public:
 int main()
 {
     std::vector<std::string> characters = {
-    "homer",
-    "spongebob",
-    "sandy",
-    "marge",
-    "patrick",
-    "mr_krabs",
-    "bart",
-    "plankton",
-    "lisa",
-    "squidward",
+    "woody",
+    "buzz_lightyear",
+    "sully",
+    "mr_incredible",
+    "lightning_mcqueen",
+    "wall_e",
+    "remy",
+    "joy",
+    "merida",
+    "dory",
+    "elastigirl",
+    "miguel",
+    "slinky",
     };
-
 
     questions = {
-    "Is your character yellow?",
-    "Is your character bald?",
-    "Is your character a man?",
-    "Is your character short?",
-    "Does your character have hair?",
-    "Is your character a child?",
-    "Is your character green?",
-    "Is your character greedy?",
-    "Is your character intelligent?",
-    "Does your character play a musical instrument?",
-    "Are you thinking of lisa?",
+        "Is your character human?",
+        "Is your character an animal?",
+        "Is your character a toy?",
+        "Does your character have superpowers?",
+        "Is your character a robot?",
+        "Is your character a child?",
+        "Is your character brave?",
+        "Does your character drive a vehicle?",
+        "Is your character from a fantasy world?",
+        "Is your character associated with food?",
+        "Is your character emotional?",
+        "Is your character a leader?",
+        "Does your character have fur?",
+        "Is your character aquatic?",
+        "Is your character from another planet?",
+        "Is your character small in size?",
+        "Does your character play a musical instrument?",
+        "Is your character a sidekick?",
+        "Is your character a mentor?",
+        "Is your character comedic?"
     };
-
 
     true_answers = {
-        {1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.0f, 0.0f, 0.0f}, // Homer
-        {1.0f, 0.0f, 0.0f, 0.75f, 1.0f, 1.0f, 0.0f, 0.25f, 0.5f, 0.5f, 0.0f}, // Spongebob
-        {0.0f, 1.0f, 0.0f, 0.5f, 1.0f, 0.0f, 0.0f, 0.25f, 0.75f, 0.0f, 0.0f}, // Sandy
-        {1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.25f, 0.75f, 0.0f, 0.0f}, // Marge
-        {0.0f, 1.0f, 0.0f, 0.25f, 0.0f, 1.0f, 0.0f, 0.25f, 0.0f, 1.0f, 0.0f}, // Patrick
-        {0.0f, 1.0f, 1.0f, 0.75f, 0.0f, 0.0f, 0.0f, 1.0f, 0.5f, 0.0f, 0.0f}, // Mr. Krabs
-        {1.0f, 0.0f, 0.0f, 0.75f, 1.0f, 1.0f, 0.0f, 0.25f, 0.50f, 0.0f, 0.0f}, // Bart
-        {0.0f, 1.0f, 1.0f, 1.00f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f}, // Plankton
-        {1.0f, 0.0f, 0.0f, 1.00f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f}, // Lisa
-        {0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.25f, 0.5f, 1.0f, 0.0f}  // Squidward
+        {0.25f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.5f, 0.5f, 0.75f}, // Woody
+        {0.25f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.5f, 0.75f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.5f, 0.5f, 1.0f}, // Buzz Lightyear
+        {0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.5f, 1.0f, 1.0f, 0.0f, 0.5f, 0.0f, 0.0f, 0.25f, 0.5f, 0.25f}, // Sully
+        {1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.75f, 0.75f, 1.0f, 0.0f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.75f, 0.5f}, // Mr. Incredible
+        {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.0f, 0.5f, 0.5f}, // Lightning McQueen
+        {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.75f, 0.0f, 0.0f, 0.0f, 0.5f}, // WALL-E
+        {0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.25f, 0.0f, 0.5f}, // Remy
+        {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.25f, 1.0f}, // Joy
+        {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.7f, 0.5f}, // Merida
+        {0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.75f, 0.0f, 0.0f, 0.25f, 1.0f}, // Dory
+        {1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.5f, 1.0f, 0.0f, 0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.5f, 0.5f, 0.5f}, // Elastigirl
+        {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.75f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.25f, 0.0f, 0.5f}, // Miguel
+        {0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.25f, 0.0f, 0.5f, 1.0f, 1.0f, 0.0f, 0.0f, 0.5f, 0.0f, 0.25f, 0.5f, 0.75f}, // Slinky
     };
+
 
 
 
     std::map<char, float> response_map = {
         {'y', 0.9f},
         {'n', 0.1f},
-        {'p', 0.75f},
-        {'u', 0.25f},
+        {'p', 0.65f},
+        {'u', 0.35f},
         {'d', 0.5f}
     };
 
@@ -98,6 +112,6 @@ int main()
     }
     sage.PrintInternalState();
 
-    std::cout << characters[sage.top_guess];
+    std::cout << characters[sage.TopGuess()];
 }
 

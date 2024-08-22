@@ -16,11 +16,15 @@ public:
 
 	void PrintInternalState() const;
 
+	size_t TopGuess() const { return top_guess_id; }
+	size_t RunnerUpGuess() const { return runner_up_guess_id; }
+
 	~SageCore();
 
 public:
-	// Top Guess
-	size_t top_guess;
+	// Store stop few guesses
+	size_t top_guess_id, runner_up_guess_id;
+	float top_guess, runner_up_guess;
 
 private:
 	void AskQuestion(const std::string& question_prompt, size_t question_id);
@@ -31,6 +35,8 @@ private:
 	void calcPosteriors(std::vector<float>& posteriors, std::vector<float>& likelihoods);
 
 	void DecideNextQuestion();
+
+	void GetTopGuesses();
 
 	// Contains character posteriors P(C_i|ans_1, ans_2, ..., ans_n, ans_n+1)
 	std::vector<float> posteriors;
@@ -44,6 +50,9 @@ private:
 
 	// Set of possible user-allowed responses and corresponding numeric values
 	std::map<char, float> response_map;
+
+	// Contains values of response_map
+	std::vector<float> responses_numeric;
 
 	// The id of the last question asked
 	size_t question_id;

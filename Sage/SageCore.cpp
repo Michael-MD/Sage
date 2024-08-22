@@ -18,6 +18,11 @@ SageCore::SageCore(size_t character_total, size_t question_total, std::map<char,
 	// Set up character priors
 	posteriors.resize(character_total);
 	posteriors.assign(character_total, 1.0f / (float)character_total);
+
+	// Extract values from response_map
+	for (const auto& pair : response_map) {
+		responses_numeric.push_back(pair.second);
+	}
 }
 
 SageCore::SageCore(size_t characters_total, size_t question_total, std::map<char, float> response_map, std::vector<float>& priors)
@@ -63,12 +68,7 @@ void SageCore::UpdateLikelihoods() {
 }
 
 void SageCore::calcPosteriors(std::vector<float>& posteriors, std::vector<float>& likelihoods) {
-	float normalization = 0.0;
-	for (size_t character_i = 0; character_i < character_total; character_i++) {
-		normalization += posteriors[character_i] * likelihoods[character_i];
-	}
-
-	normalization = 1.0f / normalization;
+	float normalization = 1.0f / std::inner_product(posteriors.begin(), posteriors.end(), likelihoods.begin(), 0.0f);
 
 	for (size_t character_i = 0; character_i < character_total; character_i++) {
 		posteriors[character_i] *= likelihoods[character_i] * normalization;
@@ -90,31 +90,30 @@ void SageCore::PrintInternalState() const {
 	std::cout << std::endl;
 }
 
-static void find_greatest_and_second_greatest(const std::vector<float>& values, float& greatest, float& second_greatest, size_t& top_guess) {
-	if (values.size() < 2) {
+void SageCore::GetTopGuesses() {
+	if (posteriors.size() < 2) {
 		throw std::runtime_error("Vector must contain at least two elements.");
 	}
 
 	// Initialize the greatest and second_greatest with minimum possible values
-	greatest = -std::numeric_limits<float>::infinity();
-	second_greatest = -std::numeric_limits<float>::infinity();
+	top_guess = -std::numeric_limits<float>::infinity();
+	runner_up_guess = -std::numeric_limits<float>::infinity();
 
-	int k = 0;
-	for (const auto& value : values) {
-		if (value >= greatest) {
-			second_greatest = greatest;
-			greatest = value;
-			top_guess = k;
-		}
-		else if (value > second_greatest && value < greatest) {
-			second_greatest = value;
-		}
+	for (size_t k = 0; k < posteriors.size(); k++) {
 
-		k++;
+		if (posteriors[k] >= top_guess) {
+			runner_up_guess = top_guess;
+			top_guess = posteriors[k];
+			top_guess_id = k;
+		}
+		else if (posteriors[k] > runner_up_guess && posteriors[k] < top_guess) {
+			runner_up_guess = posteriors[k];
+			runner_up_guess_id = k;
+		}
 	}
 
 	// Handle the case where all elements are equal
-	if (second_greatest == -std::numeric_limits<float>::infinity()) {
+	if (runner_up_guess == -std::numeric_limits<float>::infinity()) {
 		throw std::runtime_error("All elements in the vector are equal or second greatest was not found.");
 	}
 }
@@ -126,59 +125,48 @@ bool SageCore::RefineGuess() {
 	UpdateLikelihoods();
 	UpdatePosteriors();
 
-	// Decide whether to stop
-	float greatest, second_greatest;
-	find_greatest_and_second_greatest(posteriors, greatest, second_greatest, top_guess);
-	if (greatest > 3 * second_greatest) {
-		return false;
-	}
-	else {
-		return true;
-	}
+	// Decide whether to continue
+	GetTopGuesses();
+
+	return top_guess <= 1.5 * runner_up_guess;
 }
 
 void SageCore::DecideNextQuestion() {
-	std::vector<float> conditional_probabilities(character_total); // P(Q_j=Ans|C_i)
-	std::vector<float> future_likelihoods(character_total);        // P(C_i|Q_other)
-	std::vector<float> future_posteriors(character_total);         // P(C_i|Q_other)
-	std::vector<float> answer_evidence(response_map.size()); // For storing evidence values
+	std::vector<float> answer_evidence(response_map.size());		// P(Q_j=Ans)
+
+	std::vector<float> tmp_likelihoods(character_total);
+	std::vector<float> tmp_posteriors(character_total);
+	float tmp_entropy, tmp_question_i_expected_entropy;
 
 	float next_question_entropy = std::numeric_limits<float>::infinity();
+	float normalization;
 
 	for (size_t question_i = 0; question_i < question_total; question_i++) {
 		// Initialize expected entropy for this question
-		float tmp_question_i_expected_entropy = 0;
+		tmp_question_i_expected_entropy = 0;
 
 		// Calculate evidence for each possible answer
-		size_t k = 0;
-		for (const auto& pair : response_map) {
-			float ans = pair.second;
-			// Calculate conditional probabilities and evidence
-			calcLikelihoods(conditional_probabilities, question_i, ans);
-			answer_evidence[k++] = evidence(conditional_probabilities, posteriors);
+		for (size_t i = 0; i < responses_numeric.size(); i++) {
+			calcLikelihoods(tmp_likelihoods, question_i, responses_numeric[i]);		// P(Q_j=Ans|C_i)
+			answer_evidence[i] = evidence(tmp_likelihoods, posteriors);
 		}
 
 		// Normalize evidence
-		float sum = std::accumulate(answer_evidence.begin(), answer_evidence.end(), 0.0f);
-		if (sum != 0.0f) {
-			for (float& value : answer_evidence) {
-				value /= sum;
-			}
+		normalization = 1.0f / std::accumulate(answer_evidence.begin(), answer_evidence.end(), 0.0f);
+		for (float& value : answer_evidence) {
+			value *= normalization;
 		}
 
 		// Calculate expected entropy for the current question
-		k = 0;
-		for (const auto& pair : response_map) {
-			float ans = pair.second;
-
+		for (size_t i = 0; i < responses_numeric.size(); i++) {
 			// Compute future posteriors and entropy
-			future_posteriors = posteriors;
-			calcLikelihoods(future_likelihoods, question_i, ans);
-			calcPosteriors(future_posteriors, future_likelihoods);
-			float tmp_entropy = entropy(future_posteriors);
+			tmp_posteriors = posteriors;
+			calcLikelihoods(tmp_likelihoods, question_i, responses_numeric[i]);	// P(C_i|Q_other)
+			calcPosteriors(tmp_posteriors, tmp_likelihoods);	// P(C_i|Q_other)
+			tmp_entropy = entropy(tmp_posteriors);
 
 			// Calculate weighted entropy
-			tmp_question_i_expected_entropy += tmp_entropy * answer_evidence[k++];
+			tmp_question_i_expected_entropy += tmp_entropy * answer_evidence[i];
 		}
 
 		// Update the best question to ask
