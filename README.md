@@ -1,3 +1,5 @@
+![Sage](sage_logo.jpg)
+
 # What is this project?
 Meet **Sage**, Sage tries to guess what you're thinking by asking a series of questions. Sage is flexible and can be customized to work with any set of questions and answers.
 Think of the possibilities! You could set it up to guess your favourite fictional character or act as customer support for common problems or diagnose medical conditions
