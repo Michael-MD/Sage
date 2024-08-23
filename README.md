@@ -210,7 +210,6 @@ int main()
         {'n', 0.1f},
         {'p', 0.65f},
         {'u', 0.35f},
-        {'d', 0.5f}
     };
 
     Sage sage(characters.size(), questions.size(), response_map);
@@ -256,6 +255,6 @@ H[X_{n+1}] = - \sum_i P(C_i|\cap_{k=1}^{n+1}Q_k=q_k) \log \, P(C_i|\cap_{k=1}^{n
 ```
 If we ask question $Q_j$ we expect the entropy to be given by:
 ```math
-E[H[X_{n+1}^{Q_j}]] = \sum_{q_j \in Q} H[C_i|\cap_{k=1}^{n+1}Q_k=q_k\cap Q_{n+1}=q_j]P(Q_{n+1}=q_j)
+E[H[X_{n+1}^{Q_{n+1}}]] = \sum_{q_j \in Q} H[C_i|\cap_{k=1}^{n}Q_k=q_k\cap Q_{n+1}=q_j]P(Q_{n+1}=q_j)
 ```
-where $X_{n+1}^{Q_j}$ denotes denotes $X_{n+1}$ where the superscript emphasises that question $Q_j$ was asked.
+where $X_{n+1}^{Q_j}$ denotes denotes $X_{n+1}$ where the superscript emphasises that question $Q_{n+1}$ was asked.
