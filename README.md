@@ -44,11 +44,11 @@ public:
 What just happened! Nothing much, we just built a new class called Sage ontop of SageCore. Occasionally, while sage is running it will want to ask the user a question to 
 get more information, it will do so by calling the method `std::string LookupQuestionPrompt(size_t question_j)` with the number "question_j" as arguement. Let's say 
 question_j=5, so Sage is asking for the prompt of question 5 (0-indexed) to show it to the user. The function might then return the string "Is your character tall?" etc.
-This function will only be called once everytime the user is asked a question. However, 'float LookupAnswer(size_t character_i, size_t question_j)' will be called much 
+This function will only be called once every time the user is asked a question. However, 'float LookupAnswer(size_t character_i, size_t question_j)' will be called much 
 more often!
 
 'float LookupAnswer(size_t character_i, size_t question_j)' is called whenever Sage wants to know the answer to qeustion_j about character_i. For example, if
-character_i=2 and question_j=5 and haracter_i=2 repersents Robert Borone then Sage wants to know is Robert Berone tall. We want to say yes so we return 1.0f. To say no 
+character_i=2 and question_j=5 and character_i=2 repersents Robert Borone then Sage wants to know is Robert Berone tall. We want to say yes so we return 1.0f. To say no 
 we would pass 0.0f. We are also free to pass anything inbetween like 0.5f which corresponds to "I don't know". That's it! You are now ready to start Sage.
 
 You do this by specifying the set of acceptable responses to the user and the degree of certainty they correspond to. Here is an example:
@@ -199,8 +199,8 @@ int main()
 
     true_answers = {
         {0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f}, // Robert Borone (from "Everybody Loves Raymond")
-        {1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f}, // Buzz Lightyear
-        {0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f}  // Phoebe Buffay
+        {1.0f, 1.0f, 0.0f, 0.5f, 1.0f, 0.0f}, // Buzz Lightyear
+        {0.0f, 0.0f, 1.0f, 1.0f, 0.35f, 0.3f}  // Phoebe Buffay
     };
 
     std::map<char, float> response_map = {
