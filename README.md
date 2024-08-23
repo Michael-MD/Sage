@@ -162,7 +162,7 @@ Done! Here is the full script:
 
 #include "SageCore.h"
 
-unsigned int number_of_questions = 6;
+const unsigned int number_of_questions = 6;
 std::vector<std::array<float, number_of_questions>> true_answers;
 std::vector<std::string> questions;
 
@@ -212,8 +212,6 @@ int main()
     };
 
     Sage sage(characters.size(), questions.size(), response_map);
-
-    Sage sage(characters.size(), questions.size(), response_map);
     while (sage.RefineGuess());
     std::cout << characters[sage.TopGuess()];
 }
@@ -256,6 +254,6 @@ H[X_{n+1}] = - \sum_i P(C_i|\cap_{k=1}^{n+1}Q_k=q_k) \log \, P(C_i|\cap_{k=1}^{n
 ```
 If we ask question $Q_j$ we expect the entropy to be given by:
 ```math
-E[H[X_{n+1}^{Q_j}]] = \sum_{q_j \in Q} H[P(C_i|\cap_{k=1}^{n+1}Q_k=q_k\cap Q_{n+1}=q_j)]P(Q_{n+1}=q_j)
+E[H[X_{n+1}^{Q_j}]] = \sum_{q_j \in Q} H[C_i|\cap_{k=1}^{n+1}Q_k=q_k\cap Q_{n+1}=q_j]P(Q_{n+1}=q_j)
 ```
 where $X_{n+1}^{Q_j}$ denotes denotes $X_{n+1}$ where the superscript emphasises that question $Q_j$ was asked.
