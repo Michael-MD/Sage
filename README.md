@@ -1,6 +1,11 @@
-![Sage](sage_logo.jpg)
+<p align="center">
+    <img src="sage_logo.jpg" alt="Sage Mascot" width="300" height="300">
+</p>
 
-# What is this project?
+<h1 align="center">
+  <strong>Sage</strong>
+</h1>
+
 Meet **Sage**, Sage tries to guess what you're thinking by asking a series of questions. Sage is flexible and can be customized to work with any set of questions and answers.
 Think of the possibilities! You could set it up to guess your favourite fictional character or act as customer support for common problems or diagnose medical conditions
 based on symptoms. You provide it with a database of answers and questions it can ask the user, based on whcih, it will decide through a series of questions the best- 
@@ -257,4 +262,4 @@ If we ask question $Q_j$ we expect the entropy to be given by:
 ```math
 E[H[X_{n+1}^{Q_{n+1}}]] = \sum_{q_j \in Q} H[C_i|\cap_{k=1}^{n}Q_k=q_k\cap Q_{n+1}=q_j]P(Q_{n+1}=q_j)
 ```
-where $X_{n+1}^{Q_j}$ denotes denotes $X_{n+1}$ where the superscript emphasises that question $Q_{n+1}$ was asked.
+where $X_{n+1}^{Q_{n+1}}$ denotes denotes $X_{n+1}$ where the superscript emphasises that question $Q_{n+1}$ was asked.
