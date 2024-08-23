@@ -5,6 +5,7 @@
 #include <iomanip>  // For std::fixed and std::setprecision
 #include <limits>
 #include <numeric> // For std::accumulate
+#include <unordered_set>
 
 #define DEBUGGING
 
@@ -175,4 +176,31 @@ void SageCore::DecideNextQuestion() {
 			question_id = question_i;
 		}
 	}
+}
+
+struct VectorHash {
+	std::size_t operator()(const std::vector<float>& vec) const {
+		std::size_t hash = 0;
+		std::hash<float> hasher;
+		for (float v : vec) {
+			hash ^= hasher(v) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+		}
+		return hash;
+	}
+};
+
+bool SageCore::bDataSetIsValid() {
+	std::unordered_set<std::vector<float>, VectorHash> unique_questions;
+
+	std::vector<float> character_questions(question_total);
+	for (size_t character_i = 0; character_i < character_total; character_i++) {
+		for (size_t question_i = 0; question_i < question_total; question_i++) {
+			character_questions[question_i] = LookupAnswer(character_i, question_i);
+		}
+
+		unique_questions.insert(character_questions);
+
+	}
+	
+	return unique_questions.size() == character_total;
 }

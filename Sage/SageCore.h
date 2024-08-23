@@ -19,6 +19,9 @@ public:
 	size_t TopGuess() const { return top_guess_id; }
 	size_t RunnerUpGuess() const { return runner_up_guess_id; }
 
+	// Each answer should be reachable though a unique set of answers
+	bool bDataSetIsValid();
+
 	~SageCore();
 
 public:
