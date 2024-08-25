@@ -222,7 +222,6 @@ void get_question_category(size_t question_j, size_t& question_category, size_t&
 }
 
 float Sage::LookupAnswer(size_t character_i, size_t question_j) {
-    //return 1.0f;
     size_t question_category, question_i;
     get_question_category(question_j, question_category, question_i);
 

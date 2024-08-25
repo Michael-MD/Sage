@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <future>
 
 class SageCore {
 public:
@@ -67,4 +68,11 @@ private:
 
 	// Response given by user to last question
 	float response;
+
+	// Parallelization variables
+	// mutexes
+	std::mutex entropy_mutex, likelihood_mutex, tmp_posterior_mutex;
+
+	// futures
+	std::vector<std::future<void>> entropy_futures;
 };
