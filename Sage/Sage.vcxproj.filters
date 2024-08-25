@@ -18,18 +18,12 @@
     <ClCompile Include="Sage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ProbabilityUtilities.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="SageCore.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SageCore.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ProbabilityUtilities.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Timer.h">

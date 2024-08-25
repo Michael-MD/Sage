@@ -149,7 +149,6 @@ std::map<char, float> response_map = {
         {'n', 0.1f},
         {'p', 0.65f},
         {'u', 0.35f},
-        {'d', 0.5f}
     };
 ```
 
@@ -222,6 +221,25 @@ int main()
     std::cout << characters[sage.TopGuess()];
 }
 ```
+
+# Troubleshooting
+## Sage asks the same question often
+Sage is actually doing something humans might do also. When you want to be sure of an answer 
+given you pose the question again. If you recieve a second confident answer you are more likely 
+to trust the answer you are given. Sage is doing the same. Despite this, I've programmed Sage to never ask the same question consecutively. There are two ways to help mitigate this:
+1. Allow Sage to trust the response it recieves from the user more i.e. change the response map so that yes might now correspond to 0.9f rather than 0.7f, for instance. If you want Sage to never ask a repeat question then have the response map as follows:
+```
+std::map<char, float> response_map = {
+        {'y', 1.0f},
+        {'n', 0.0f},
+};
+```
+The down side of course is that if the user gives an incorrect response Sage will never reconsider.
+
+2. Have more question of a greater variety
+The best types of questions are those where the user is as likely to respond in the affirmative as the negative regardless of the character the user has chosen. In other words, a more nuanced questions variety allows Sage to explore more nuanced paths.
+
+
 
 # Mathematical Underpinnings
 Sage uses very elegant concepts from probability and information theory to update its guess. Using this approach as oppsoed to binary trees for example permits the 

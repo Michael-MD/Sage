@@ -1,44 +1,16 @@
 #include "SageCore.h"
-#include"ProbabilityUtilities.h"
 
 #include <iostream>
 #include <iomanip>  // For std::fixed and std::setprecision
 #include <limits>
 #include <numeric> // For std::accumulate
 #include <unordered_set>
+#include <algorithm> // For std::find
 
+#include "SageCore.h"
+#include "Timer.h"
 
-
-#define DEBUGGING
-
-#ifdef DEBUGGING
-
-#include <chrono>
-#include <string>
-#include <iostream>
-
-class Timer {
-public:
-	Timer(std::string tmp_title) {
-		m_startpoint = std::chrono::high_resolution_clock::now();
-		title = tmp_title;
-	}
-
-	~Timer() {
-		auto m_endpoint = std::chrono::high_resolution_clock::now();
-		auto start = std::chrono::time_point_cast<std::chrono::microseconds>(m_startpoint).time_since_epoch().count();
-		auto end = std::chrono::time_point_cast<std::chrono::microseconds>(m_endpoint).time_since_epoch().count();
-		auto duration = end - start;
-		auto duration_s = duration * 1e-6;
-		std::cout << title << ": " << duration << "us (" << duration_s << " sec)" << std::endl;
-	}
-
-private:
-	std::chrono::time_point<std::chrono::high_resolution_clock> m_startpoint;
-	std::string title;
-};
-
-#endif
+//#define DEBUGGING
 
 SageCore::SageCore(size_t character_total, size_t question_total, std::map<char, float> response_map)
 	: character_total(character_total),
@@ -54,15 +26,14 @@ SageCore::SageCore(size_t character_total, size_t question_total, std::map<char,
 	entropies.resize(question_total);
 	entropy_futures.resize(question_total);
 
-	// Set up temporary posterior
-	//tmp_posteriors.resize(character_total);
-
 	// Extract values from response_map
 	for (const auto& pair : response_map) {
 		responses_numeric.push_back(pair.second);
 	}
 
 	question_id = question_total;
+	previous_question_ids.resize(questions_asked_memory, question_total);
+	oldest_question = 0;
 }
 
 SageCore::SageCore(size_t characters_total, size_t question_total, std::map<char, float> response_map, std::vector<float>& priors)
@@ -75,14 +46,12 @@ SageCore::~SageCore() {
 
 }
 
-void SageCore::AskQuestion(const std::string& question_prompt, size_t question_id) {
-	this->question_id = question_id;
-
+void SageCore::AskQuestion() {
 	char response_char;
 
 	while (true) {
 		// Ask the user the question and get a response
-		std::cout << question_prompt;
+		std::cout << LookupQuestionPrompt(question_id);
 		std::cin >> response_char;
 
 		// Translate response to numeric based on the provided map
@@ -112,9 +81,9 @@ inline void SageCore::calcPosteriors(std::vector<float>& tmp_likelihoods, std::v
 	}
 }
 
-inline float SageCore::calcEntropy(std::vector<float>& curr_likelihoods, std::vector<float>& curr_posteriors, size_t question_id, float response) {
-	calcLikelihoods(curr_likelihoods, question_id, response);
-	calcPosteriors(curr_likelihoods, curr_posteriors);
+inline float SageCore::calcEntropy(std::vector<float>& tmp_likelihoods, std::vector<float>& tmp_posteriors, size_t question_id, float response) {
+	calcLikelihoods(tmp_likelihoods, question_id, response);
+	calcPosteriors(tmp_likelihoods, tmp_posteriors);
 
 #ifdef DEBUGGING
 	for (float posterior : curr_posteriors) {
@@ -125,7 +94,7 @@ inline float SageCore::calcEntropy(std::vector<float>& curr_likelihoods, std::ve
 #endif
 
 	float entropy = 0.0f;
-	for (float posterior : curr_posteriors) {
+	for (float posterior : tmp_posteriors) {
 		if (posterior > 0) { // Avoid log(0) which is undefined
 			entropy -= posterior * std::log2(posterior);
 		}
@@ -176,7 +145,7 @@ void SageCore::GetTopGuesses() {
 bool SageCore::RefineGuess() {
 	DecideNextQuestion();
 
-	AskQuestion(LookupQuestionPrompt(question_id), question_id);
+	AskQuestion();
 	calcLikelihoods(likelihoods, question_id, response);
 	calcPosteriors(likelihoods, posteriors);
 
@@ -188,13 +157,13 @@ bool SageCore::RefineGuess() {
 
 void SageCore::calcNextQuestionExpectedEntropy(size_t question_i) {
 	std::vector<float> answer_evidence(response_map.size());		// P(Q_j=Ans)
-	float normalization, entropy = 0;
+	float normalization = 1, entropy = 0;
 	
 	std::vector<float> tmp_likelihoods(character_total);
 	std::vector<float> tmp_posteriors(character_total);
 
 	// Don't ask the same question twice in a row
-	if (question_id == question_i) {
+	if (std::find(previous_question_ids.begin(), previous_question_ids.end(), question_i) != previous_question_ids.end()) {
 		entropy = std::numeric_limits<float>::infinity();
 		goto set_entropy;
 	}
@@ -202,14 +171,11 @@ void SageCore::calcNextQuestionExpectedEntropy(size_t question_i) {
 	// Calculate evidence for each possible answer
 	for (size_t i = 0; i < responses_numeric.size(); i++) {
 		calcLikelihoods(tmp_likelihoods, question_i, responses_numeric[i]);		// P(Q_j=Ans|C_i)
-		answer_evidence[i] = evidence(tmp_likelihoods, posteriors);
+		answer_evidence[i] = std::inner_product(posteriors.begin(), posteriors.end(), tmp_likelihoods.begin(), 0.0f);;
 	}
 	
 	// Normalize evidence
 	normalization = 1.0f / std::accumulate(answer_evidence.begin(), answer_evidence.end(), 0.0f);
-	for (float& value : answer_evidence) {
-		value *= normalization;
-	}
 
 	// Calculate expected entropy for the current question
 	for (size_t i = 0; i < responses_numeric.size(); i++) {
@@ -219,10 +185,11 @@ void SageCore::calcNextQuestionExpectedEntropy(size_t question_i) {
 
 set_entropy:
 	std::lock_guard<std::mutex> lock(entropy_mutex);
-	entropies[question_i] = entropy;
+	entropies[question_i] = entropy * normalization;
 }
 
 void SageCore::DecideNextQuestion() {
+
 	for (size_t question_i = 0; question_i < question_total; question_i++) {
 		entropy_futures[question_i] = std::async(std::launch::async, &SageCore::calcNextQuestionExpectedEntropy, this, question_i);
 	}
@@ -237,6 +204,9 @@ void SageCore::DecideNextQuestion() {
 		question_id = question_i;
 		least_entropy = entropies[question_i];
 	}
+
+	previous_question_ids[oldest_question++] = question_id;
+	oldest_question %= questions_asked_memory;
 }
 
 struct VectorHash {

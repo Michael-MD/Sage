@@ -136,11 +136,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Sage.cpp" />
-    <ClCompile Include="ProbabilityUtilities.cpp" />
     <ClCompile Include="SageCore.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ProbabilityUtilities.h" />
     <ClInclude Include="SageCore.h" />
     <ClInclude Include="Timer.h" />
   </ItemGroup>

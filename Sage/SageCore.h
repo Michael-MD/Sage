@@ -31,7 +31,7 @@ public:
 	float top_guess, runner_up_guess;
 
 private:
-	void AskQuestion(const std::string& question_prompt, size_t question_id);
+	void AskQuestion();
 
 	inline void calcLikelihoods(std::vector<float>& tmp_likelihoods, size_t question_id, float response);
 	inline void calcPosteriors(std::vector<float>& tmp_likelihoods, std::vector<float>& tmp_posteriors);
@@ -66,12 +66,17 @@ private:
 	// The id of the last question asked
 	size_t question_id;
 
+	// Keeps track of previous five questions to avoid too much repetition
+	const size_t questions_asked_memory = 10;
+	std::vector<size_t> previous_question_ids;
+	size_t oldest_question;
+
 	// Response given by user to last question
 	float response;
 
 	// Parallelization variables
 	// mutexes
-	std::mutex entropy_mutex, likelihood_mutex, tmp_posterior_mutex;
+	std::mutex entropy_mutex;
 
 	// futures
 	std::vector<std::future<void>> entropy_futures;
