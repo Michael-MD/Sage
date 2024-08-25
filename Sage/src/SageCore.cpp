@@ -6,6 +6,7 @@
 #include <numeric> // For std::accumulate
 #include <unordered_set>
 #include <algorithm> // For std::find
+#include <cmath>
 
 #include "SageCore.h"
 #include "Timer.h"
@@ -66,43 +67,6 @@ void SageCore::AskQuestion() {
 	}
 }
 
-inline void SageCore::calcLikelihoods(std::vector<float>& tmp_likelihoods, size_t question_id, float response) {
-	for (size_t character_i = 0; character_i < character_total; character_i++) {
-		tmp_likelihoods[character_i] = 1 - std::abs(LookupAnswer(character_i, question_id) - response);
-	}
-}
-
-inline void SageCore::calcPosteriors(std::vector<float>& tmp_likelihoods, std::vector<float>& tmp_posteriors) {
-
-	float normalization = 1.0f / std::inner_product(posteriors.begin(), posteriors.end(), tmp_likelihoods.begin(), 0.0f);
-
-	for (size_t character_i = 0; character_i < character_total; character_i++) {
-		tmp_posteriors[character_i] = posteriors[character_i] * tmp_likelihoods[character_i] * normalization;
-	}
-}
-
-inline float SageCore::calcEntropy(std::vector<float>& tmp_likelihoods, std::vector<float>& tmp_posteriors, size_t question_id, float response) {
-	calcLikelihoods(tmp_likelihoods, question_id, response);
-	calcPosteriors(tmp_likelihoods, tmp_posteriors);
-
-#ifdef DEBUGGING
-	for (float posterior : curr_posteriors) {
-		if (posterior > 1 || posterior < 0) {
-			throw std::runtime_error("Probabilities must be between zero and one");
-		}
-	}
-#endif
-
-	float entropy = 0.0f;
-	for (float posterior : tmp_posteriors) {
-		if (posterior > 0) { // Avoid log(0) which is undefined
-			entropy -= posterior * std::log2(posterior);
-		}
-	}
-
-	return entropy;
-}
-
 void SageCore::PrintInternalState() const {
 	std::cout << "\nPosteriors: ";
 
@@ -112,47 +76,6 @@ void SageCore::PrintInternalState() const {
 	}
 
 	std::cout << std::endl;
-}
-
-void SageCore::GetTopGuesses() {
-	if (posteriors.size() < 2) {
-		throw std::runtime_error("Vector must contain at least two elements.");
-	}
-
-	// Initialize the greatest and second_greatest with minimum possible values
-	top_guess = -std::numeric_limits<float>::infinity();
-	runner_up_guess = -std::numeric_limits<float>::infinity();
-
-	for (size_t k = 0; k < posteriors.size(); k++) {
-
-		if (posteriors[k] >= top_guess) {
-			runner_up_guess = top_guess;
-			top_guess = posteriors[k];
-			top_guess_id = k;
-		}
-		else if (posteriors[k] > runner_up_guess && posteriors[k] < top_guess) {
-			runner_up_guess = posteriors[k];
-			runner_up_guess_id = k;
-		}
-	}
-
-	// Handle the case where all elements are equal
-	if (runner_up_guess == -std::numeric_limits<float>::infinity()) {
-		throw std::runtime_error("All elements in the vector are equal or second greatest was not found.");
-	}
-}
-
-bool SageCore::RefineGuess() {
-	DecideNextQuestion();
-
-	AskQuestion();
-	calcLikelihoods(likelihoods, question_id, response);
-	calcPosteriors(likelihoods, posteriors);
-
-	// Decide whether to continue
-	GetTopGuesses();
-
-	return top_guess <= 1.5 * runner_up_guess;
 }
 
 void SageCore::calcNextQuestionExpectedEntropy(size_t question_i) {
