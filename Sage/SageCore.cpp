@@ -55,7 +55,7 @@ SageCore::SageCore(size_t character_total, size_t question_total, std::map<char,
 	entropy_futures.resize(question_total);
 
 	// Set up temporary posterior
-	tmp_posteriors.resize(character_total);
+	//tmp_posteriors.resize(character_total);
 
 	// Extract values from response_map
 	for (const auto& pair : response_map) {
@@ -97,30 +97,27 @@ void SageCore::AskQuestion(const std::string& question_prompt, size_t question_i
 	}
 }
 
-inline void SageCore::calcLikelihoods(size_t question_id, float response) {
+inline void SageCore::calcLikelihoods(std::vector<float>& tmp_likelihoods, size_t question_id, float response) {
 	for (size_t character_i = 0; character_i < character_total; character_i++) {
-		likelihoods[character_i] = 1 - std::abs(LookupAnswer(character_i, question_id) - response);
+		tmp_likelihoods[character_i] = 1 - std::abs(LookupAnswer(character_i, question_id) - response);
 	}
 }
 
-inline void SageCore::calcPosteriors(bool tmp) {
-	std::vector<float>& vec_posteriors = tmp ? tmp_posteriors : posteriors;
+inline void SageCore::calcPosteriors(std::vector<float>& tmp_likelihoods, std::vector<float>& tmp_posteriors) {
 
-	float normalization = 1.0f / std::inner_product(posteriors.begin(), posteriors.end(), likelihoods.begin(), 0.0f);
+	float normalization = 1.0f / std::inner_product(posteriors.begin(), posteriors.end(), tmp_likelihoods.begin(), 0.0f);
 
 	for (size_t character_i = 0; character_i < character_total; character_i++) {
-		vec_posteriors[character_i] = posteriors[character_i] * likelihoods[character_i] * normalization;
+		tmp_posteriors[character_i] = posteriors[character_i] * tmp_likelihoods[character_i] * normalization;
 	}
 }
 
-inline float SageCore::calcEntropy(size_t question_id, float response, bool tmp) {
-	calcLikelihoods(question_id, response);
-	calcPosteriors(tmp);
-
-	std::vector<float>& vec_posteriors = tmp ? tmp_posteriors : posteriors;
+inline float SageCore::calcEntropy(std::vector<float>& curr_likelihoods, std::vector<float>& curr_posteriors, size_t question_id, float response) {
+	calcLikelihoods(curr_likelihoods, question_id, response);
+	calcPosteriors(curr_likelihoods, curr_posteriors);
 
 #ifdef DEBUGGING
-	for (float posterior : vec_posteriors) {
+	for (float posterior : curr_posteriors) {
 		if (posterior > 1 || posterior < 0) {
 			throw std::runtime_error("Probabilities must be between zero and one");
 		}
@@ -128,7 +125,7 @@ inline float SageCore::calcEntropy(size_t question_id, float response, bool tmp)
 #endif
 
 	float entropy = 0.0f;
-	for (float posterior : vec_posteriors) {
+	for (float posterior : curr_posteriors) {
 		if (posterior > 0) { // Avoid log(0) which is undefined
 			entropy -= posterior * std::log2(posterior);
 		}
@@ -180,8 +177,8 @@ bool SageCore::RefineGuess() {
 	DecideNextQuestion();
 
 	AskQuestion(LookupQuestionPrompt(question_id), question_id);
-	calcLikelihoods(question_id, response);
-	calcPosteriors();
+	calcLikelihoods(likelihoods, question_id, response);
+	calcPosteriors(likelihoods, posteriors);
 
 	// Decide whether to continue
 	GetTopGuesses();
@@ -189,9 +186,12 @@ bool SageCore::RefineGuess() {
 	return top_guess <= 1.5 * runner_up_guess;
 }
 
-void SageCore::calcQuestionEntropy(size_t question_i) {
+void SageCore::calcNextQuestionExpectedEntropy(size_t question_i) {
 	std::vector<float> answer_evidence(response_map.size());		// P(Q_j=Ans)
-	float normalization, entropy = 3;
+	float normalization, entropy = 0;
+	
+	std::vector<float> tmp_likelihoods(character_total);
+	std::vector<float> tmp_posteriors(character_total);
 
 	// Don't ask the same question twice in a row
 	if (question_id == question_i) {
@@ -200,12 +200,9 @@ void SageCore::calcQuestionEntropy(size_t question_i) {
 	}
 
 	// Calculate evidence for each possible answer
-	{
-		std::lock_guard<std::mutex> lock(likelihood_mutex);
-		for (size_t i = 0; i < responses_numeric.size(); i++) {
-			calcLikelihoods(question_i, responses_numeric[i]);		// P(Q_j=Ans|C_i)
-			answer_evidence[i] = evidence(likelihoods, posteriors);
-		}
+	for (size_t i = 0; i < responses_numeric.size(); i++) {
+		calcLikelihoods(tmp_likelihoods, question_i, responses_numeric[i]);		// P(Q_j=Ans|C_i)
+		answer_evidence[i] = evidence(tmp_likelihoods, posteriors);
 	}
 	
 	// Normalize evidence
@@ -215,19 +212,9 @@ void SageCore::calcQuestionEntropy(size_t question_i) {
 	}
 
 	// Calculate expected entropy for the current question
-	{
-		std::unique_lock<std::mutex> likelihood_lock(likelihood_mutex, std::defer_lock);
-		std::unique_lock<std::mutex> tmp_posterior_lock(tmp_posterior_mutex, std::defer_lock);
-		std::lock(likelihood_lock, tmp_posterior_lock);
-
-		for (size_t i = 0; i < responses_numeric.size(); i++) {
-			// Compute future posteriors and entropy
-			calcLikelihoods(question_i, responses_numeric[i]);
-			calcPosteriors(true);	// P(C_i|Q_other)
-
-			// Calculate weighted entropy
-			entropy += calcEntropy(question_i, responses_numeric[i]) * answer_evidence[i];
-		}
+	for (size_t i = 0; i < responses_numeric.size(); i++) {
+		// Calculate weighted entropy
+		entropy += calcEntropy(tmp_likelihoods, tmp_posteriors, question_i, responses_numeric[i]) * answer_evidence[i];
 	}
 
 set_entropy:
@@ -237,18 +224,18 @@ set_entropy:
 
 void SageCore::DecideNextQuestion() {
 	for (size_t question_i = 0; question_i < question_total; question_i++) {
-		entropy_futures[question_i] = std::async(std::launch::async, &SageCore::calcQuestionEntropy, this, question_i);
+		entropy_futures[question_i] = std::async(std::launch::async, &SageCore::calcNextQuestionExpectedEntropy, this, question_i);
 	}
 
 	// Find question with least entropy
-	float next_question_entropy = std::numeric_limits<float>::infinity();
+	float least_entropy = std::numeric_limits<float>::infinity();
 	for (size_t question_i = 0; question_i < question_total; question_i++) {
 		// Wait for all future to complete
 		entropy_futures[question_i].get();
 
-		if (entropies[question_i] >= next_question_entropy) continue;
+		if (entropies[question_i] >= least_entropy) continue;
 		question_id = question_i;
-		next_question_entropy = entropies[question_i];
+		least_entropy = entropies[question_i];
 	}
 }
 
