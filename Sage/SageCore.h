@@ -31,11 +31,10 @@ public:
 
 private:
 	void AskQuestion(const std::string& question_prompt, size_t question_id);
-	void UpdateLikelihoods();
-	void UpdatePosteriors();
 
-	void calcLikelihoods(std::vector<float>& likelihoods, size_t question_id, float response);
-	void calcPosteriors(std::vector<float>& posteriors, std::vector<float>& likelihoods);
+	inline void calcLikelihoods(size_t question_id, float response);
+	inline void calcPosteriors(bool tmp = false);
+	inline float calcEntropy(size_t question_id, float response, bool tmp = true);
 
 	void DecideNextQuestion();
 
@@ -47,9 +46,11 @@ private:
 	// Contains character likelihoods after latest answer recieved P(ans_n+1 | C_i)
 	std::vector<float> likelihoods;
 
+	// Helper variables
+	std::vector<float> tmp_posteriors;
+
 	// Total number of characters under consideration
-	size_t character_total;
-	size_t question_total;
+	size_t character_total, question_total;
 
 	// Set of possible user-allowed responses and corresponding numeric values
 	std::map<char, float> response_map;
