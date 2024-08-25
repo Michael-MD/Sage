@@ -8,7 +8,34 @@
 #include <unordered_set>
 #include <future>
 
-#include "Timer.h"
+
+
+#include <chrono>
+#include <string>
+#include <iostream>
+
+class Timer {
+public:
+	Timer(std::string tmp_title) {
+		m_startpoint = std::chrono::high_resolution_clock::now();
+		title = tmp_title;
+	}
+
+	~Timer() {
+		auto m_endpoint = std::chrono::high_resolution_clock::now();
+		auto start = std::chrono::time_point_cast<std::chrono::microseconds>(m_startpoint).time_since_epoch().count();
+		auto end = std::chrono::time_point_cast<std::chrono::microseconds>(m_endpoint).time_since_epoch().count();
+		auto duration = end - start;
+		auto duration_s = duration * 1e-6;
+		std::cout << title << ": " << duration << "us (" << duration_s << " sec)" << std::endl;
+	}
+
+private:
+	std::chrono::time_point<std::chrono::high_resolution_clock> m_startpoint;
+	std::string title;
+};
+
+
 
 #define DEBUGGING
 
@@ -22,6 +49,8 @@ SageCore::SageCore(size_t character_total, size_t question_total, std::map<char,
 	// Set up character priors
 	posteriors.resize(character_total);
 	posteriors.assign(character_total, 1.0f / (float)character_total);
+	
+	entropies.resize(question_total);
 
 	// Set up temporary posterior
 	tmp_posteriors.resize(character_total);
@@ -158,55 +187,50 @@ bool SageCore::RefineGuess() {
 	return top_guess <= 1.5 * runner_up_guess;
 }
 
-void SageCore::DecideNextQuestion() {
+void SageCore::calcQuestionEntropy(size_t question_i) {
+	float normalization;
 	std::vector<float> answer_evidence(response_map.size());		// P(Q_j=Ans)
 
-	float tmp_entropy, tmp_question_i_expected_entropy;
+	// Don't ask the same question twice in a row
+	if (question_id == question_i) return;
 
-	float next_question_entropy = std::numeric_limits<float>::infinity();
-	float normalization;
+	// Initialize expected entropy for this question
+	entropies[question_i] = 0;
 
-	size_t question_last_asked = question_id;
+	// Calculate evidence for each possible answer
+	for (size_t i = 0; i < responses_numeric.size(); i++) {
+		calcLikelihoods(question_i, responses_numeric[i]);		// P(Q_j=Ans|C_i)
+		answer_evidence[i] = evidence(likelihoods, posteriors);
+	}
 
+	// Normalize evidence
+	normalization = 1.0f / std::accumulate(answer_evidence.begin(), answer_evidence.end(), 0.0f);
+	for (float& value : answer_evidence) {
+		value *= normalization;
+	}
+
+	// Calculate expected entropy for the current question
+	for (size_t i = 0; i < responses_numeric.size(); i++) {
+		// Compute future posteriors and entropy
+		calcLikelihoods(question_i, responses_numeric[i]);
+		calcPosteriors(true);	// P(C_i|Q_other)
+
+		// Calculate weighted entropy
+		entropies[question_i] += calcEntropy(question_i, responses_numeric[i]) * answer_evidence[i];
+	}
+}
+
+void SageCore::DecideNextQuestion() {
 	for (size_t question_i = 0; question_i < question_total; question_i++) {
-		// Don't ask the same question twice in a row
-		if (question_last_asked == question_i) continue;
+		calcQuestionEntropy(question_i);
+	}
 
-		// Initialize expected entropy for this question
-		tmp_question_i_expected_entropy = 0;
-
-		// Calculate evidence for each possible answer
-		//Timer timer("Evidence calc");
-		for (size_t i = 0; i < responses_numeric.size(); i++) {
-			calcLikelihoods(question_i, responses_numeric[i]);		// P(Q_j=Ans|C_i)
-			answer_evidence[i] = evidence(likelihoods, posteriors);
-		}
-		//timer.~Timer();
-
-		// Normalize evidence
-		normalization = 1.0f / std::accumulate(answer_evidence.begin(), answer_evidence.end(), 0.0f);
-		for (float& value : answer_evidence) {
-			value *= normalization;
-		}
-
-		//Timer ghebh("expected entropy");
-		// Calculate expected entropy for the current question
-		for (size_t i = 0; i < responses_numeric.size(); i++) {
-			// Compute future posteriors and entropy
-			calcLikelihoods(question_i, responses_numeric[i]);
-			calcPosteriors(true);	// P(C_i|Q_other)
-			tmp_entropy = calcEntropy(question_i, responses_numeric[i]);
-
-			// Calculate weighted entropy
-			tmp_question_i_expected_entropy += tmp_entropy * answer_evidence[i];
-		}
-		//ghebh.~Timer();
-
-		// Update the best question to ask
-		if (next_question_entropy > tmp_question_i_expected_entropy) {
-			next_question_entropy = tmp_question_i_expected_entropy;
-			question_id = question_i;
-		}
+	// Find question with least entropy
+	float next_question_entropy = std::numeric_limits<float>::infinity();
+	for (size_t question_i = 0; question_i < question_total; question_i++) {
+		if (entropies[question_i] >= next_question_entropy) continue;
+		question_id = question_i;
+		next_question_entropy = entropies[question_i];
 	}
 }
 

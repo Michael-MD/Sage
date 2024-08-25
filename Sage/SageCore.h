@@ -36,6 +36,8 @@ private:
 	inline void calcPosteriors(bool tmp = false);
 	inline float calcEntropy(size_t question_id, float response, bool tmp = true);
 
+	void calcQuestionEntropy(size_t question_i);
+
 	void DecideNextQuestion();
 
 	void GetTopGuesses();
@@ -48,6 +50,8 @@ private:
 
 	// Helper variables
 	std::vector<float> tmp_posteriors;
+
+	std::vector<float> entropies;
 
 	// Total number of characters under consideration
 	size_t character_total, question_total;
