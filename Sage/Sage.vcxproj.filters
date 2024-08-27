@@ -15,13 +15,22 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\SageCore.cpp">
+    <ClCompile Include="src\SageCore_Construction.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\ProbabilityUtilities.cpp">
+    <ClCompile Include="src\SageCore_UserInterface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\UserInterface.cpp">
+    <ClCompile Include="src\Sage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SageCore_ProbabilityUtilities.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SageCore_Checks.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SageCore_Questions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -2,10 +2,9 @@
 
 #include <limits>
 #include <algorithm> // For std::find
+#include <map>
 
-#include "SageCore.h"
 
-//#define DEBUGGING
 
 SageCore::SageCore(size_t character_total, size_t question_total, std::map<char, float> response_map)
 	: character_total(character_total),

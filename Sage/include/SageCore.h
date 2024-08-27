@@ -33,9 +33,9 @@ public:
 private:
 	void AskQuestion();
 
-	inline void calcLikelihoods(std::vector<float>& tmp_likelihoods, size_t question_id, float response);
-	inline void calcPosteriors(std::vector<float>& tmp_likelihoods, std::vector<float>& tmp_posteriors);
-	inline float calcEntropy(std::vector<float>& tmp_likelihoods, std::vector<float>& tmp_posteriors, size_t question_id, float response);
+	void calcLikelihoods(std::vector<float>& tmp_likelihoods, size_t question_id, float response);
+	void calcPosteriors(std::vector<float>& tmp_likelihoods, std::vector<float>& tmp_posteriors);
+	float calcEntropy(std::vector<float>& tmp_likelihoods, std::vector<float>& tmp_posteriors, size_t question_id, float response);
 
 	void calcNextQuestionExpectedEntropy(size_t question_i);
 
