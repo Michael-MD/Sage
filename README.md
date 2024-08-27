@@ -13,14 +13,10 @@ fitting answer. That's right, I said "best-fitting" answer because it take into 
 mathematics, right now let's look at a demo and see how to use it ourselves. 
 
 # How to use Sage
-## Set up Sage
-To include and use the `SageCore.h` header file in your C++ project, follow these instructions.
-
-First, clone the repository to your local machine, in a command prompt:
-```bash
-https://github.com/Michael-MD/Sage.git
-```
-Go in the newly created "Sage" directory and click on Sage.sln, and Visual Studio will start up.
+## Setup Sage
+You only need two things, these being `SageCore.h` which can be found in the reop by navigating to `Sage\Sage\include\` from the reop root directory. Second you will need to statically link Sage to your project. 
+If you don't know how to do that I recoomend [this excellent video](https://www.youtube.com/watch?v=or1dAmUO8k0&t=619s) by the Cherno which will take you through the entire process in Visual Studio. I have made 
+a release with the .lib files.
 
 ## How to setup your own questions and answers
 Sage is very easy to use, the hard part is getting the data! Sage is all contained in a C++ class called SageCore. You can include it using
