@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <numeric> // For std::accumulate and inner_product
+#include "Timer.h"
 
 void SageCore::AskQuestion() {
 	char response_char;
@@ -24,40 +25,43 @@ void SageCore::AskQuestion() {
 }
 
 void SageCore::calcNextQuestionExpectedEntropy(size_t question_i) {
-	std::vector<float> answer_evidence(response_map.size());		// P(Q_j=Ans)
-	float normalization = 1, entropy = 0;
+	float entropy = 0.0f;
 
-	std::vector<float> tmp_likelihoods(character_total);
-	std::vector<float> tmp_posteriors(character_total);
-
-	// Don't ask the same question twice in a row
 	if (std::find(previous_question_ids.begin(), previous_question_ids.end(), question_i) != previous_question_ids.end()) {
+		// Don't ask the same question twice in a row
 		entropy = std::numeric_limits<float>::infinity();
-		goto set_entropy;
+	}
+	else {
+		std::vector<float> tmp_likelihoods(character_total);
+
+		float tmp_probability;
+		float normalization = 0.0f;
+
+		for (size_t i = 0; i < responses_numeric.size(); i++) {
+			calcLikelihoods(tmp_likelihoods, question_i, responses_numeric[i]);
+
+			float total = 0.0f;
+
+			for (size_t character_i = 0; character_i < character_total; character_i++) {
+				tmp_probability = posteriors[character_i] * tmp_likelihoods[character_i];
+				total += tmp_probability;
+				entropy -= tmp_probability * std::log2(tmp_probability);
+			}
+
+			normalization += total;
+			entropy += total * std::log2(total);
+		}
+
+		entropy /= normalization;
 	}
 
-	// Calculate evidence for each possible answer
-	for (size_t i = 0; i < responses_numeric.size(); i++) {
-		calcLikelihoods(tmp_likelihoods, question_i, responses_numeric[i]);		// P(Q_j=Ans|C_i)
-		answer_evidence[i] = std::inner_product(posteriors.begin(), posteriors.end(), tmp_likelihoods.begin(), 0.0f);;
-	}
-
-	// Normalize evidence
-	normalization = 1.0f / std::accumulate(answer_evidence.begin(), answer_evidence.end(), 0.0f);
-
-	// Calculate expected entropy for the current question
-	for (size_t i = 0; i < responses_numeric.size(); i++) {
-		// Calculate weighted entropy
-		entropy += calcEntropy(tmp_likelihoods, tmp_posteriors, question_i, responses_numeric[i]) * answer_evidence[i];
-	}
-
-set_entropy:
 	std::lock_guard<std::mutex> lock(entropy_mutex);
-	entropies[question_i] = entropy * normalization;
+	entropies[question_i] = entropy;
 }
 
-void SageCore::DecideNextQuestion() {
 
+void SageCore::DecideNextQuestion() {
+	Timer timer("q");
 	for (size_t question_i = 0; question_i < question_total; question_i++) {
 		entropy_futures[question_i] = std::async(std::launch::async, &SageCore::calcNextQuestionExpectedEntropy, this, question_i);
 	}

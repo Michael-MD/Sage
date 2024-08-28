@@ -6,7 +6,7 @@
 #include <vector>
 
 void SageCore::PrintInternalState() const {
-	std::cout << "\nPosteriors: ";
+	std::cout << "Posteriors: ";
 
 	// Iterate over the vector and print each element
 	for (const float& posterior : posteriors) {
@@ -14,6 +14,16 @@ void SageCore::PrintInternalState() const {
 	}
 
 	std::cout << std::endl;
+
+
+	std::cout << "Entropies: ";
+
+	// Iterate over the vector and print each element
+	for (const float& entropy : entropies) {
+		std::cout << std::fixed << std::setprecision(6) << entropy << " ";  // Print with 2 decimal places
+	}
+
+	std::cout << '\n' << std::endl;
 }
 
 struct VectorHash {

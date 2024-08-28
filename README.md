@@ -276,4 +276,8 @@ If we ask question $Q_j$ we expect the entropy to be given by:
 ```math
 E[H[X_{n+1}^{Q_{n+1}}]] = \sum_{q_j \in Q} H[C_i|\cap_{k=1}^{n}Q_k=q_k\cap Q_{n+1}=q_j]P(Q_{n+1}=q_j)
 ```
-where $X_{n+1}^{Q_{n+1}}$ denotes denotes $X_{n+1}$ where the superscript emphasises that question $Q_{n+1}$ was asked.
+where $X_{n+1}^{Q_{n+1}}$ denotes denotes $X_{n+1}$ where the superscript emphasises that question $Q_{n+1}$ was asked. 
+A computationally more efficient formula is given by 
+```math
+E[H[X_{n+1}^{Q_{n+1}}]] = \sum_{q_j \in Q} \sum_i P(C_i | \cap_{k=1}^{n}Q_k=q_k) P(Q_{n+1}=q_j | C_i) \log \, [\sum_l P(C_l | \cap_{k=1}^{n}Q_k=q_k) P(Q_{n+1}=q_j | C_l)] - \sum_{q_j \in Q} \sum_i P(C_i | \cap_{k=1}^{n}Q_k=q_k) P(Q_{n+1}=q_j | C_i) \log \, [ P(C_i | \cap_{k=1}^{n}Q_k=q_k) P(Q_{n+1}=q_j | C_i)]
+```
